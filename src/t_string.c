@@ -173,6 +173,50 @@ void getCommand(client *c) {
     getGenericCommand(c);
 }
 
+static bool checkRandomNum(char *num)
+{
+    char *c = num;
+
+    while (*c != '\0') {
+        if (!(('0' <= *c) && (*c <= '9'))) {
+            return false;
+        }
+        c++;
+    }
+
+    return true;
+}
+
+/**
+ * command: random n
+ * return a random num < n, if n <= 0, return 0
+ * @author: luoxiangnan
+ */
+void randomCommand(client *c)
+{
+    char buff[64] = {0};
+    int num = 0;
+    robj *o = NULL;
+
+    if (!checkRandomNum(c->argv[1]->ptr)) {
+        o = createObject(OBJ_STRING, sdsnewlen("sorry, it's not a num :(",
+                           strlen("sorry, it's not a num :(")));
+        addReplyBulk(c, o);
+        return;
+    }
+
+    sscanf(c->argv[1]->ptr, "%d", &num);
+    if (num > 0) {
+        num = random() % num;
+    } else {
+        num = 0;
+    }
+
+    sprintf(buff, "%s %d", "redis: ", num);
+    o = createObject(OBJ_STRING, sdsnewlen(buff, strlen(buff)));
+    addReplyBulk(c, o);
+}
+
 void getsetCommand(client *c) {
     if (getGenericCommand(c) == C_ERR) return;
     c->argv[2] = tryObjectEncoding(c->argv[2]);
